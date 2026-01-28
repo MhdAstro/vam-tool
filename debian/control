@@ -1,0 +1,13 @@
+Source: vam-tool
+Section: utils
+Priority: optional
+Maintainer: Monajem and Mohammadi <student@ut.ac.ir>
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.1.3
+
+Package: vam-tool
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, tar, coreutils
+Description: Versioned Archive Manager
+ A tool to manage backups with versioning (v1, v2...) and checksum verification.
+ 

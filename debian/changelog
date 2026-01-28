@@ -1,0 +1,6 @@
+vam-tool (1.0.0-1) unstable; urgency=medium
+
+  * Initial release for OS Lab Final Project.
+  * Features: Create, List, Restore, Checksum.
+
+ -- Team Monajem <student@ut.ac.ir>  Tue, 07 Jan 2026 12:00:00 +0330

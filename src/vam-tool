@@ -1,0 +1,64 @@
+#!/bin/bash
+# VAM-TOOL: Versioned Archive Manager
+VERSION="1.0.0"
+TOOL_NAME="vam-tool"
+
+print_usage() {
+    echo "Usage: $TOOL_NAME [COMMAND] [OPTIONS]"
+    echo "Commands:"
+    echo "  create <source_dir> <backup_dir>   Create archive (e.g. project-v1.tar.gz)"
+    echo "  list <backup_dir>                  List all archives"
+    echo "  restore <archive_file> <dest_dir>  Restore archive with checksum verification"
+    echo "Options:"
+    echo "  --help     Show this help"
+    echo "  --version  Show version"
+}
+
+if [ $# -eq 0 ]; then print_usage; exit 1; fi
+
+case "$1" in
+    --help) print_usage; exit 0 ;;
+    --version) echo "$TOOL_NAME $VERSION"; exit 0 ;;
+    create)
+        SRC="$2"; BACKUP="$3"
+        if [ -z "$SRC" ] || [ -z "$BACKUP" ]; then echo "Error: Missing args"; exit 1; fi
+        if [ ! -d "$SRC" ]; then echo "Error: Source not found"; exit 1; fi
+        
+        mkdir -p "$BACKUP"
+        # Find last version
+        LAST=$(ls "$BACKUP" 2>/dev/null | grep -oP 'project-v\K[0-9]+' | sort -n | tail -1)
+        if [ -z "$LAST" ]; then NEXT=1; else NEXT=$((LAST + 1)); fi
+        
+        ARCHIVE="$BACKUP/project-v${NEXT}.tar.gz"
+        echo "Creating version $NEXT..."
+        tar -czf "$ARCHIVE" -C "$(dirname "$SRC")" "$(basename "$SRC")"
+        
+        # Checksum (Bonus)
+        sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+        echo "Success: $ARCHIVE (Checksum generated)"
+        ;;
+    list)
+        if [ -z "$2" ]; then echo "Error: Missing backup dir"; exit 1; fi
+        ls -lh "$2"/*.tar.gz 2>/dev/null || echo "No archives found."
+        ;;
+    restore)
+        ARCHIVE="$2"; DEST="$3"
+        if [ -z "$ARCHIVE" ] || [ -z "$DEST" ]; then echo "Error: Missing args"; exit 1; fi
+        
+        # Verify Checksum (Bonus)
+        if [ -f "$ARCHIVE.sha256" ]; then
+            echo "Verifying checksum..."
+            if sha256sum -c "$ARCHIVE.sha256" --status; then
+                echo "Checksum OK."
+            else
+                echo "Error: Checksum MISMATCH! File corrupted."
+                exit 1
+            fi
+        fi
+        
+        mkdir -p "$DEST"
+        tar -xzf "$ARCHIVE" -C "$DEST"
+        echo "Restored to $DEST"
+        ;;
+    *) print_usage; exit 1 ;;
+esac
